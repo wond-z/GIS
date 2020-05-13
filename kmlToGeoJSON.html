@@ -10,8 +10,10 @@
     <body>
         <script type="module">
             import { kml } from "https://unpkg.com/@tmcw/togeojson?module";
-
-            $.get("./gansusheng.kml", function (res) {
+            // var url = './gansusheng.kml';
+            // var url = './地面叠加层.kml';
+            var url = './点线面示例.kml';
+            $.get(url, function (res) {
                 console.log(res);
                 console.log(kml(res));
                 exportRaw('export.geojson', JSON.stringify(kml(res)));
