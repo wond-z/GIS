@@ -29,6 +29,8 @@
             view.className = 'main';
             document.body.appendChild(view);
             window.addEventListener('resize', function (e) {
+                console.log('window.resize');
+                
                 graphView.invalidate();
             }, false);
 
@@ -37,15 +39,54 @@
             // graphView.translate(-80, -50);
 
             var node = new ht.Node();
+            node.a('type','absolute')
             node.setName('circle');
             node.setPosition(70, 50);
             node.setSize(20, 20);
             node.setStyle('shape', 'circle');
             node.s({// 设置节点的属性
 				'draggable': true,// 如果Node的draggable设为true，Palette可以自动处理dragstart，但是dragover和drop事件需要我们处理
-				'image.stretch': 'centerUniform',// 图片的绘制方式为非失真方式
+				'stretch': 'fill',// 图片的绘制方式为非失真方式
 			});
             dataModel.add(node);
+
+            var node1 = new ht.Node();
+            // node1.setName('circle11');
+            node1.setPosition(70, 150);
+            node1.setSize(1, 1);
+            // node1.s({
+
+            // })
+            node1.setStyle('shape', 'circle');
+            node1.setStyle('shape.border.cap', 'round');
+            node1.setStyle('shape.border.color', '#979797');
+            node1.setStyle('shape.border.width', 20);
+            node1.setStyle('shape.border.width.absolute', true);
+            dataModel.add(node1);
+
+            // 画点
+            var shape = new ht.Shape();
+            shape.setPoints([{x: 100, y: 100}, {x: 100, y: 100}]);
+            shape.setSegments([1, 2]);
+            shape.s({
+                'shape.background': null,
+                'shape.border.cap': "round",
+                'shape.border.color': "#979797",
+                'shape.border.width': 20, // 点的绝对直径
+                'shape.border.width.absolute': true
+            });
+            dataModel.add(shape);
+            
+            // graphView.mp(function (e) {
+            //     console.log(e);
+            //     console.log(graphView.getDataModel());
+            //     console.log(graphView.getLayers());
+                
+                
+            //     if (e.property === 'zoom') {
+            //     node.setScale(1/e.newValue, 1/e.newValue)
+            //     }
+            // })
         </script>
     </body>
 </html>

@@ -1,0 +1,705 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+	<title>OpenLayers Test</title>
+	<link rel="stylesheet" href="css/ol_v4.6.5.css" type="text/css">
+
+	<script type="text/javascript">
+		htconfig = {
+			Default: {
+				paletteTitleBackground: 'rgb(240,239,238)',
+				paletteTitleHoverBackground: 'rgb(231,231,231)',
+				paletteTitleLabelColor: 'rgb(138, 138, 138)',
+				paletteItemSelectBackground: '',
+				paletteItemHoverBorderColor: 'rgb(138, 138, 138)',
+
+				toolTipBackground: 'rgb(255, 255, 255)',
+
+				dialogButtonBackground: 'rgb(231, 76, 60)',
+	            dialogButtonSelectBackground: 'rgb(196, 65, 51)',
+	            dialogButtonLabelColor: '#fff',
+
+	            buttonBackground: '',
+	            buttonSelectBackground: 'rgb(231, 231, 231)',
+	            buttonLabelColor: 'rgb(159, 159, 159)',
+	            comboBoxLabelColor: 'rgb(159, 159, 159)',
+	            comboBoxSelectBackground: 'rgb(138, 138, 138)'
+			},
+			Color: {
+	            titleBackground: '#076186',// 指定HT所有组件的标题栏的背景色，如面板，对话框，AccordionView等
+	            titleIconBackground: 'rgb(186, 186, 186)',// 指定HT所有组件的标题ICON的颜色，如面板，对话框，AccordionView等
+	            headerBackground: '#DAECF4'// 指定HT所有组件的header背景色，如表格表头、工具条等
+	        }
+		};
+	</script>
+	<script src="js/ol_v4.6.5.js"></script>
+	<script src="../lib/core/ht.js"></script>
+	<script src="../lib/core/ht-ui.js"></script>
+	<script src="../lib/plugin/ht-cssanimation.js"></script>
+	<script src="../lib/plugin/ht-palette.js"></script>
+	<script src="../lib/plugin/ht-form.js"></script>
+	<script src="../lib/plugin/ht-dialog.js"></script>
+	<script src="../lib/plugin/ht-edgetype.js"></script>
+
+	<script src="js/CreateEdgeInteractor.js"></script>
+	<script src="js/CreateShapeInteractor.js"></script>
+    <script src="js/GraphViewControl1.js"></script>
+
+    <style type="text/css">
+		html, body {
+			margin: 0;
+			padding: 0;
+		}
+		#mapDiv {
+			width: 900px;
+			height: 900px;
+		}
+	</style>
+
+    <script type="text/javascript">
+		graphViewControl = new GraphViewControl();// 自定义控件，作为 openlayers 地图上自定义控件
+		graphView = graphViewControl.getGraphView();// 获取拓扑图组件
+		dm = graphView.getDataModel();// 获取拓扑图中的数据容器
+
+		palette = new ht.widget.Palette();// 创建一个组件面板
+		formPane = createFormPane();// 导航栏的 form 表单
+
+		var data;
+		palette.handleDragAndDrop = function(e, state) {// 左侧面板组件拖拽功能
+		    if ( state === 'prepare' ) data = palette.getDataAt(e);
+		    else if( state === 'begin' || state === 'between' ) {}
+		    else {
+	            if (!ht.Default.containedInView(e, graphView)) return; // 判断交互事件所处位置是否在graphView组件之上
+
+                var node = new ht.Node();// 拖拽到graphView中就创建一个新的节点显示在graphView上
+                node.setImage(data.getImage());// 设置节点上贴图
+                node.setName(data.getName());// 设置名称（为了显示在属性栏中）
+                node.s('label', '');// 在graphView中节点下方不会出现setName中的值，label优先级高于name
+                node.p(graphView.lp(e));// 将节点的位置设置为graphView事件下的拓扑图中的逻辑坐标，即设置鼠标点下的位置为节点坐标
+
+                graphView.dm().add(node);// 将节点添加进graphView中
+                graphView.sm().ss(node);// 默认选中节点
+                graphView.setFocus(node);// 设置将焦点聚集在该节点上
+
+                var productModel = [// 鼠标经过节点时，上方出现的属性栏中的“产品型号和产品亮点”
+					{model: 'SY16C', character: '可伸缩行走架,\n更强整机性能,\n作业更灵活'},
+					{model: 'SY35U', character: '高效低耗,\n更大机重与斗容,\n更大机重与斗容'},
+					{model: 'SY55U', character: '加强型动臂,\n双重过滤保障,\n加强型下车'},
+					{model: 'SYL956H', character: '强劲高效,\n高舒适性,\n更低的燃油消耗'}
+				];
+				var random = Math.floor(Math.random()*4);
+                node.a('product', productModel[random]);// 这边为产品型号和产品亮点。到时候可以根据需要传入具体的值
+                node._popover = createInnerGV(node);// 创建鼠标hover时显示的属性栏
+
+            	editableFunc();// 设置节点为可编辑状态并且选中导航栏中的“编辑”
+		    }
+		}
+
+		function init() {
+			initPalette(palette);
+
+			var mapDiv = document.getElementById('mapDiv');
+			map = new ol.Map({
+				target: 'mapDiv',// 地图容器
+				controls: ol.control.defaults().extend([
+					graphViewControl,// 自定义拓扑控件
+					new ol.control.OverviewMap(),// 地图全局视图控件
+					new ol.control.ScaleLine(),// 比例尺控件
+					new ol.control.ZoomSlider(),// 缩放刻度控件
+					new ol.control.ZoomToExtent()// 缩放到全局控件
+				]),
+				layers: [
+					new ol.layer.Tile({
+			        	source: new ol.source.OSM()
+			        })
+				],// 图层
+				view: new ol.View({// 地图视图
+					projection: 'EPSG:3857',// 投影
+		            center: [11745051, 3928902],// 视图的初始中心 中心的坐标系由projection选项指定
+		            zoom: 4// 缩放级别 用于计算视图的初始分辨率
+				})
+			});
+			map.getInteractions().forEach(function(element, index, array) {
+				if(element instanceof ol.interaction.DragBox) {
+					element.setActive(false);// 禁用 openLayers 的 shift+鼠标左键 方框选中放大功能
+				}
+			});
+
+			changeForm = changeMapForm();
+			var bottomBorderPane = new ht.widget.BorderPane();
+			bottomBorderPane.setCenterView(mapDiv);
+			bottomBorderPane.getView().style.borderTop = '1px solid #eee';
+
+			borderPane = new ht.widget.BorderPane();
+			borderPane.setTopView(formPane);
+			borderPane.setLeftView(palette, 260);// 参数二为设置 该view的宽度
+			borderPane.setCenterView(bottomBorderPane);
+			bottomBorderPane.getView().appendChild(changeForm.getView());
+			changeForm.getView().style.left = '48px';
+			changeForm.setHeight(24);
+			changeForm.setWidth(310);
+
+			borderPane.addToDOM(document.getElementById('dom1'));// 将面板组件添加到 body 中
+			borderPane.addViewListener(function(e) {
+				if (e.kind !== 'validate') return;// 刷新事件
+
+				map.updateSize();// 用第三方插件的时候强制刷新地图
+			});
+
+			graphView.getView().addEventListener('mousemove', function (e) {
+            	propertyShow(e);// 鼠标移动到节点上时，显示矩形属性栏
+			})
+
+		}
+
+		function editableFunc() {// 设置导航栏中的“编辑”选中，并且关闭编辑状态下的 anchor 和 host 功能
+			var select = formPane.getItemById('select');// 获得 formPane 上 id 为 select 的 item
+			select.element.setSelected(true);// 设置 item 选中
+
+			graphView.setEditable(true);// 将GraphView设置为可编辑
+            var interactor = graphView.getEditInteractor();// getEditInteractor 之前必须设置 setEditable(true)
+            interactor.setStyle('anchorVisible', false);// 设置 anchor按钮 不可见
+			interactor.setStyle('connectGuideVisible', false);// 设置 右边的链接按钮 吸附功能 不可见
+		}
+
+		function createMsgForm(data) {// 设置属性栏中的内容 为一个ui的form表单
+			var tableLayout = new ht.ui.TableLayout();// 表格布局器
+            tableLayout.setColumnPreferredWidth(0, 100);// 第一列宽度 100
+            tableLayout.setColumnPreferredWidth(1, 200);// 第二列宽度 200
+            tableLayout.getView().style.background = '#fff';
+
+            if (data.getName()) var pName = data.getName();
+            if (data.a('product')) {
+            	var model = data.a('product').model;
+            	var character = data.a('product').character;
+            }
+
+            var array = [
+				{key: '产品名称', value: pName},
+				{key: '经度', dataName: 'lon', value: ol.proj.toLonLat(data.a('coord'))[0]},//这个值应该要是会变化的。。。
+				{key: '纬度', dataName: 'lat', value: ol.proj.toLonLat(data.a('coord'))[1]},
+				{key: '产品类型', value: model},
+				{key: '产品亮点', value: character}
+			];
+			array.forEach(function(item, index) {
+            	tableRow = new ht.ui.TableRow();// 表格中的一行
+
+            	var label = new ht.ui.Label();// 文本
+            	label.setText(item.key);// 设置文本内容
+            	tableRow.addView(label);// 将该文本添加进 tableRow 中
+
+            	if (index === 4) {
+            		var textArea = new ht.ui.TextArea();// 文本域
+		            textArea.setInstant(true);// 设置用户每输入一个字符就派发 value 属性变化事件
+		            textArea.setValue(item.value);// 设置内容
+		            textArea.setLineHeight(25);// 设置行高
+		            tableRow.addView(textArea);// 将该文本域添加进 tableRow 中
+            	}
+            	else {
+            		var textField = new ht.ui.TextField();// 文本框
+		            textField.setInstant(true);// 设置用户每输入一个字符就派发 value 属性变化事件
+
+		            if (item.dataName) textField.setFormDataName(item.dataName);// 设置 setFormDataName 这样 ht.ui.Form 工具就才会收集它的数据
+
+		            textField.setValue(item.value);// 设置内容
+		            tableRow.addView(textField);// 将该文本框添加进 tableRow 中
+            	}
+
+	            tableLayout.addView(tableRow);// 将该行添加进 tableLayout 中
+			});
+
+			tableLayout._form = new ht.ui.Form(tableLayout);// ht.ui.Form 工具类可自动管理容器中的表单组件，包括新增和删除的表单组件
+            tableLayout._form.addChangeListener(function (e) {// 实时监听 JSON 数据变化，动态改变 form 中的数据
+                if (e.kind === 'formDataValueChange') {// ht.ui.Form 中属性值变化事实监听变化
+                	var lon = parseFloat(tableLayout._form.getItem('lon')),// 监听 经纬度 的值的变化
+                		lat = parseFloat(tableLayout._form.getItem('lat'));
+
+                	var coord = ol.proj.fromLonLat([lon, lat]);
+                	data.a('coord', coord);
+
+          			var position = map.getPixelFromCoordinate(data.a('coord'));
+          			data.setPosition(position[0], position[1]);// 根据传入的经纬度坐标实时改变节点的坐标
+                }
+            });
+
+			return tableLayout;
+		}
+
+		function createFormPane() {// 作为导航栏的form表单
+			var fp = new ht.widget.FormPane();
+			fp.setVGap(0);// 设置表单组件水平间距 默认值为6
+			fp.setHGap(0);// 设置表单的行垂直间距 默认值为6
+			fp.setHPadding(4);// 设置表单左边和右边与组件内容的间距，默认值为8
+			fp.setVPadding(4);// 设置表单顶部和顶部与组件内容的间距，默认值为8
+			fp.setHeight(40);// 设置表单高度
+
+			var btBgColor = '#fff',
+				btnIconColor = 'rgb(159, 159, 159)',
+				btnSelectColor = 'rgb(231, 231, 231)';
+
+			fp.addRow([// 添加行 首尾各加了一个''，并且占的宽度均为相对值0.1，就会将中间部分居中
+				'', {
+				    id: 'select',// id 唯一标示属性，可通过 formPane.getItemById(id) 获取添加到对应的 item 对象
+				    button: {// ht.widget.Button 为按钮类
+				        background: btBgColor,// 设置背景颜色
+				        icon: './symbols/icon/select.json',// 设置图标
+				        iconColor: btnIconColor,// 设置图标颜色
+				        selectBackground: btnSelectColor,// 设置选中背景颜色
+				        togglable: true,// 设置按钮是否处于开关状态
+				        groupId: 't',// 设置组编号，属于同组的togglable按钮具有互斥功能
+				        toolTip: '编辑',// 设置文字提示，可通过 enableToolTip() 和 disableToolTip() 启动和关闭文字提示
+				        onClicked: function() {// 按钮点击触发函数
+				            editableFunc();
+				        }
+				    }
+				}, {
+					id: 'pointLine',
+				    button: {
+				        background: btBgColor,
+				        icon: './symbols/icon/line.json',
+				        iconColor: btnIconColor,
+				        selectBackground: btnSelectColor,
+				        togglable: true,
+				        groupId: 't',
+				        toolTip: '连线',
+				        onClicked: function () {
+				        	/** 通过 setInteractors 组合交互器
+				        	* DefaultInteractor实现Group、Edge和SubGraph图元的默认双击响应，手抓图平移，滚轮缩放，键盘响应等功能
+				        	* TouchInteractor实现移动设备上的Touch交互功能
+				        	* CreateEdgeInteractor 为 CreateEdgeInteractor.js 文件中自定义的连线交互器
+				        	* CreateShapeInteractor 为 CreateShapeInteractor.js 文件中自定义的多边形交互器
+				        	**/
+				            graphView.setInteractors([new ht.graph.DefaultInteractor(graphView), new ht.graph.TouchInteractor(graphView, {
+				                selectable: false
+				            }), new CreateEdgeInteractor(graphView)]);
+				        }
+				    }
+				}, {
+					id: 'orthoLine',
+				    button: {
+				        background: btBgColor,
+				        icon: './symbols/icon/right-angle.json',
+				        iconColor: btnIconColor,
+				        selectBackground: btnSelectColor,
+				        togglable: true,
+				        groupId: 't',
+				        toolTip: '直角连线',
+				        onClicked: function () {
+				            graphView.setInteractors([new ht.graph.DefaultInteractor(graphView), new ht.graph.TouchInteractor(graphView, {
+				                selectable: false
+				            }), new CreateEdgeInteractor(graphView, 'ortho')]);
+				        }
+				    }
+				}, {
+					id: 'polyline',
+				    button: {
+				        background: btBgColor,
+				        icon: './symbols/icon/polygon.json',
+				        iconColor: btnIconColor,
+				        selectBackground: btnSelectColor,
+				        togglable: true,
+				        groupId: 't',
+				        toolTip: '多边形',
+				        onClicked: function () {
+				            graphView.setInteractors([new ht.graph.DefaultInteractor(graphView), new ht.graph.TouchInteractor(graphView, {
+				                selectable: false
+				            }), new CreateShapeInteractor(graphView)]);
+				        }
+				    }
+				}, {
+				    button: {
+				        background: btBgColor,
+				        icon: './symbols/icon/export.json',
+				        iconColor: btnIconColor,
+				        selectBackground: btnSelectColor,
+				        toolTip: '导出',
+				        onClicked: function () {
+				        	var textarea = document.createElement("textarea");
+				        	textarea.innerHTML = graphView.dm().serialize();
+
+				            var dialog = new ht.widget.Dialog();
+				            dialog.setConfig({
+				            	width: 300,
+				            	height: 200,
+				            	title: '序列化场景',
+				            	content: textarea,
+				            	closable: true
+				            });
+				            dialog.show();
+				        }
+				    }
+				}, {
+					id: 'subway',
+				    button: {
+				        background: btBgColor,
+				        icon: './symbols/icon/subway.json',
+				        iconColor: btnIconColor,
+				        selectBackground: btnSelectColor,
+				        toolTip: '地铁',
+				        onClicked: function () {
+				        	borderPane.getView().style.display = 'none';
+				        	subwayBorderPane().addToDOM();
+				        }
+				    }
+				},''
+			], [0.1, 36, 36, 36, 36, 36, 36, 0.1], 30);
+
+			return fp;
+		}
+
+		function subwayBorderPane() {// 地铁线路图的页面
+			var subwayIframe = document.createElement('iframe');
+			subwayIframe.src = 'http://www.hightopo.com/demo/subway-elevator/';
+			subwayIframe.setAttribute('frameborder', '0', 0);
+
+			var bp = new ht.widget.BorderPane();
+			var fp = new ht.widget.FormPane();
+			fp.setHGap(0);
+			fp.setVPadding(4);
+
+			fp.addRow([
+				{
+				    button: {
+				        background: '#fff',
+				        icon: './symbols/icon/back.json',
+				        iconColor: 'rgb(159, 159, 159)',
+				        selectBackground: 'rgb(231, 231, 231)',
+				        toolTip: '返回',
+				        onClicked: function () {
+				        	borderPane.getView().style.display = 'block';
+				        	bp.getView().style.display = 'none';
+				        	formPane.iv();
+				        }
+				    }
+				}, ''
+			], [36, 0.1], 30);
+
+			bp.setTopView(fp, 40);
+			bp.setCenterView(subwayIframe);
+			return bp;
+		}
+
+		function initPalette(palette) {// 加载palette面板组件中的图元
+			var nodeArray = ['city', 'equipment'];
+			var nameArray = ['城市', '大型'];// arrNode中的index与nameArr中的一一对应
+
+			for (var i = 0; i < nodeArray.length; i++) {
+				var name = nameArray[i];
+
+				nodeArray[i] = new ht.Group();// palette面板是将图元都分在“组”里面，然后向“组”中添加图元即可
+				palette.dm().add(nodeArray[i]);// 向palette面板组件中添加group图元
+				nodeArray[i].setExpanded(true);// 设置分组为打开的状态
+				nodeArray[i].setName(name);// 设置组的名字
+
+				var imageArray = [];
+				switch(i){
+					case 0:
+						imageArray = ['symbols/5.json', 'symbols/6.json', 'symbols/叉车.json', 'symbols/公交车.json', 'symbols/人1.json', 'symbols/人2.json', 'symbols/人3.json', 'symbols/树.json', 'symbols/树2.json'];
+						break;
+					case 1:
+						imageArray = ['symbols/飞机.json', 'symbols/吊机.json', 'symbols/卡车.json', 'symbols/货轮.json', 'symbols/龙门吊.json', 'symbols/公园.json'];
+						break;
+					default:
+						break;
+				}
+				setPaletteNode(imageArray, nodeArray[i], palette);
+			}
+		}
+
+		function setPaletteNode(imageArray, array, palette) {// 创建 palette 上 节点及设置名称、显示图片、父子关系
+			for (var i = 0; i < imageArray.length; i++) {
+				var imageName = imageArray[i],
+					name = imageName.slice(imageName.lastIndexOf('/')+1, imageName.lastIndexOf('.'));// 获取最后一个 / 和最后一个.中间的文本，作为节点的 name
+
+				createNode(imageName, name, array, palette);// 创建节点，显示在 palette 面板上
+			}
+		}
+
+		function createNode(image, name, parent, palette) {// 创建palette面板组件上的节点
+			var node = new ht.Node();
+			palette.dm().add(node);// 将节点添加进 palette 的数据容器中
+			node.setImage(image);// 设置节点的图片
+			node.setName(name);// 设置节点名称
+			node.setParent(parent);// 设置节点的父亲
+			node.s({// 设置节点的属性
+				'draggable': true,// 如果Node的draggable设为true，Palette可以自动处理dragstart，但是dragover和drop事件需要我们处理
+				'image.stretch': 'centerUniform',// 图片的绘制方式为非失真方式
+			});
+			return node;
+		}
+
+		function propertyShow(e) {// 鼠标移动到节点上时，显示矩形属性栏
+            var oldHoverNode = graphView._hoverNode;// 获取上一次事件下的图元, _hoverNode 并非 ui 中定义，为自定义变量
+            var newNode = graphView.getDataAt(e);// 获取当前事件下的图元
+
+            if (oldHoverNode !== newNode) {
+            	if ((oldHoverNode instanceof ht.Shape) || (newNode instanceof ht.Shape) || (oldHoverNode instanceof ht.Edge) || (newNode instanceof ht.Edge)) return;// shape和edge类型的节点没有显示属性栏的功能
+
+                if (oldHoverNode || !newNode) {
+                	oldHoverNode._popover.tableLayout.getView().style.display = 'none';
+                }
+
+                if (newNode && newNode._popover) {// 每个 Node 上都缓存了一个弹出框实例(存在私有变量 _popover 上)
+                    var newPopover = newNode._popover.tableLayout;
+                    var preferredSize = newPopover.getPreferredSize();// getPreferredSize获取的就是这个 tablelayout 最合适的大小
+					newPopover.setWidth(preferredSize.width);
+					newPopover.setHeight(preferredSize.height);
+
+                    newNode._rect = getScreenRect(graphView, newNode, preferredSize);// 节点的屏幕矩形范围
+                    newPopover.getView().style.left = newNode._rect.x + 'px';
+                    newPopover.getView().style.top = newNode._rect.y + 'px';
+
+                    if (formPane.getItemById('select').element.isSelected()) {
+                    	newPopover.getView().style.display = 'block';
+                    }
+                }
+                graphView._hoverNode = newNode;
+            }
+		}
+
+		function getScreenRect(graphView, node, preferredSize) {// 设置属性栏外部的矩形方框的位置和大小
+            var tx = graphView.tx(),// 获取水平平移值
+                ty = graphView.ty(),// 设置垂直平移值
+                pos = node.getPosition(),// 获取节点的位置
+                width = node.getWidth(),// 获取节点的宽度
+                height = node.getHeight();// 获取节点的高度
+
+            return {// 返回矩形的位置和宽高，显示在节点的正上方的位置
+                x: tx + pos.x - preferredSize.width/2,
+                y: ty + pos.y - preferredSize.height - height,
+                width: width,
+                height: height
+            }
+        }
+
+        function createInnerGV(data) {
+        	var tableLayout = createMsgForm(data);
+	    	graphView.getView().appendChild(tableLayout.getView());
+
+        	var info = {
+				tableLayout: tableLayout
+			};
+        	return info;
+        }
+
+        function changeMapForm() {// 切换不同的地图的 form 表单
+        	var fp = new ht.widget.FormPane();
+        	fp.setVPadding(2);
+        	fp.setHPadding(2);
+        	fp.setVGap(0);
+
+			var heatmapLayer = new ol.layer.Heatmap({
+				source: new ol.source.Vector({
+					url: 'https://openlayers.org/en/v4.6.5/examples/data/kml/2012_Earthquakes_Mag5.kml',
+					format: new ol.format.KML({
+						extractStyles: false
+					})
+				}),
+				blur: 15,
+				radius: 5
+			});
+
+			var imageLayer = new ol.layer.Image({
+	        	source: new ol.source.ImageArcGISRest({
+		            ratio: 1,
+		            params: {},
+		            url: 'http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Demographics/ESRI_Population_World/MapServer'
+	          	})
+	        });
+
+			var heatmapFlag = true, imageFlag = true;
+			fp.addRow([
+				{
+					id: 'heatMap',
+					button: {
+						label: '热力图',
+						background: '#fff',
+						onClicked: function() {
+							map.getLayers().getArray().forEach(function(layer) {
+        						if (layer.type === 'VECTOR'){
+        							map.removeLayer(layer);
+        							heatmapFlag = false;
+        							fp.getItemById('heatMap').element.setBackground('rgb(255, 255, 255)');
+        							fp.getItemById('heatMap').element.setLabelColor('rgb(159, 159, 159)');
+        						}
+        						else {
+        							heatmapFlag = true;
+        							fp.getItemById('heatMap').element.setBackground('rgb(159, 159, 159)');
+        							fp.getItemById('heatMap').element.setLabelColor('rgb(231, 231, 231)');
+
+        						}
+        					});
+        					if (heatmapFlag) map.addLayer(heatmapLayer);
+						}
+					}
+				},
+				{
+					comboBox: {
+						labels: ['ArcGIS 地图', '谷歌地图', 'Bing 地图', '高德地图', 'Stamen 地图', 'OpenStreet 地图'],
+						values: ['ArcGIS 地图', '谷歌地图', 'Bing 地图', '高德地图', 'Stamen 地图', 'OpenStreet 地图'],
+						value: 'OpenStreet 地图',
+						onValueChanged: function() {
+							if (this.getValue() === 'ArcGIS 地图') {
+								map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+	        					map.addLayer(imageLayer);
+
+	        					var property = fp.getItemById('property');
+	       						property.element.getView().style.display = 'none';
+							}
+							else if (this.getValue() === '谷歌地图') {
+	        					map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+
+	        					map.getLayers().getArray()[0].setSource(
+									new ol.source.XYZ({
+										url: 'http://www.google.cn/maps/vt/pb=!1m4!1m3!1i{z}!2i{x}!3i{y}!2m3!1e0!2sm!3i420120104!3m8!2szh-CN!3scn!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0!23i4111425',
+										// crossOrigin: 'anonymous'
+									})
+								)
+
+								var property = fp.getItemById('property');
+	       						property.element.getView().style.display ='none'
+							}
+							else if (this.getValue() === 'Bing 地图') {
+								map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+	       						map.getLayers().getArray()[0].setSource(
+	        						new ol.source.BingMaps({
+	        							culture: 'zh-cn',
+								    	key: 'Av0D-OPANFIEtxq6NPjm1qhIt3JLw3Fn9g7FEBQBlsFC-cMM-ygM7DGNCBjm6qOL',
+								    	imagerySet: 'RoadOnDemand'
+								  	})
+	        					);
+
+								var property = fp.getItemById('property');
+	       						property.element.setLabels(['Bing 地图', '卫星', '深色画布', '浅色画布', '灰色画布']);
+
+	       						property.element.onValueChanged = function() {
+		        					map.getLayers().getArray()[0].setSource(
+		        						new ol.source.BingMaps({
+		        							culture: 'zh-cn',
+									    	key: 'Av0D-OPANFIEtxq6NPjm1qhIt3JLw3Fn9g7FEBQBlsFC-cMM-ygM7DGNCBjm6qOL',
+									    	imagerySet: property.element.getValue()
+									  	})
+		        					);
+		        				}
+	       						property.element.setValues(['RoadOnDemand', 'Aerial', 'CanvasDark', 'CanvasLight', 'CanvasGray']);
+	       						property.element.setValue('RoadOnDemand');
+	       						property.element.getView().style.display = 'block';
+							}
+							else if (this.getValue() === '高德地图') {
+								map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+
+	        					map.getLayers().getArray()[0].setSource(
+							        new ol.source.XYZ({
+							            url: 'http://webrd03.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}&lang=zh_cn'
+							        })
+								);
+
+								var property = fp.getItemById('property');
+	       						property.element.getView().style.display = 'none'
+							}
+							else if (this.getValue() === 'Stamen 地图') {
+								map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+	        					map.getLayers().getArray()[0].setSource(
+	        						new ol.source.Stamen({layer: 'toner'})
+	        					);
+
+								var property = fp.getItemById('property');
+	       						property.element.setLabels(['Stamen 地图', '地形', '水彩']);
+
+	       						property.element.onValueChanged = function() {
+		        					map.getLayers().getArray()[0].setSource(
+		        						new ol.source.Stamen({layer: property.element.getValue()})
+		        					);
+		        				}
+	       						property.element.setValues(['toner', 'terrain', 'watercolor']);
+	       						property.element.setValue('toner');
+	       						property.element.getView().style.display = 'block';
+							}
+							else if (this.getValue() === 'OpenStreet 地图') {
+								map.getLayers().getArray().forEach(function(layer) {
+	        						if (layer.type === 'IMAGE' || layer.type === 'VECTOR'){
+	        							map.removeLayer(layer);
+	        						}
+	        					});
+
+								map.getLayers().getArray()[0].setSource(
+	        						new ol.source.OSM()
+	        					);
+
+								var property = fp.getItemById('property');
+	       						property.element.setLabels(['Open Street 地图层', '地形', '自行车地图']);
+
+	       						property.element.onValueChanged = function() {
+	       							var source = '', ele = property.element;
+		        					if (ele.getValue() === '0') source = new ol.source.OSM();
+		        					else if (ele.getValue() === '1') source = new ol.source.OSM({url:'http://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png'});
+		        					else if (ele.getValue() === '2') source = new ol.source.OSM({url:'http://{a-c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png'});
+		        					map.getLayers().getArray()[0].setSource(source);
+		        				}
+	       						property.element.setValues(['0', '1', '2']);
+	       						property.element.setValue('0');
+	       						property.element.getView().style.display = 'block';
+							}
+						}
+
+					}
+				},
+				{
+					id: 'property',
+					comboBox: {
+						labels: ['Open Street 地图', '地形', '自行车地图'],
+        				values: ['0', '1', '2'],
+        				value: '0',
+        				onValueChanged: function() {
+        					var source = '';
+        					if (this.getValue() === '0') source = new ol.source.OSM();
+        					else if (this.getValue() === '1') source = new ol.source.OSM({url:'http://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png'});
+        					else if (this.getValue() === '2') source = new ol.source.OSM({url:'http://{a-c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png'});
+
+        					map.getLayers().getArray()[0].setSource(source);
+        				}
+					}
+				}
+			], [50, 120, 120]);
+
+        	return fp;
+        }
+        function move() {
+        	var dataModel = graphView.getDataModel();
+        	var graphView2 = new ht.graph.GraphView(dataModel);
+        	graphView2.addToDOM(document.getElementById('dom2'))
+			// var view2 = graphView2.getView();
+			// view2.className = 'main';document.getElementById('dom2')
+			// document.getElementById('dom2').appendChild(view2);
+        }
+	</script>
+</head>
+<body onload="init()">
+	<div id="dom1" style="width: 100%; height: 900px"></div>
+	<div id="mapDiv" style=""></div>
+	<button style="position: fixed;z-index: 100" onclick="move()">move</button>
+	<div id="dom2" style="position: fixed; "></div>
+</body>
+</html>
