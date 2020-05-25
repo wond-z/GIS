@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>block</title>
+        <style>
+            html, body {
+                padding: 0px;
+                margin: 0px;
+            }
+            .main {
+                margin: 0px;
+                padding: 0px;
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+            }
+        </style>
+        <script src="../lib/core/ht.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var dataModel = new ht.DataModel();
+            var graphView = new ht.graph.GraphView(dataModel);
+
+            var view = graphView.getView();
+            view.className = 'main';
+            document.body.appendChild(view);
+            window.addEventListener('resize', function (e) {
+                graphView.invalidate();
+            }, false);
+
+            graphView.setEditable(true);
+            graphView.setZoom(0.8);
+            // graphView.translate(-80, -50);
+
+            // var node = new ht.Node();
+            // node.setName('rect');
+            // node.setSize(w, h);
+            // node.setPosition(70, 50);
+            // node.setStyle('shape', 'rect');
+            // dataModel.add(node);
+
+
+
+            var w = 60, h = 40;
+            // init data model
+            var node = new ht.Node();
+            node.setName('rect1');
+            // node.setParent(block);
+            node.setSize(w, h);
+            node.setPosition(70, 50);
+            node.setStyle('shape', 'rect');
+            dataModel.add(node);
+
+            var line = new ht.Node();
+
+            line.setPosition(0, 0);
+            // line.setParent(block);
+            line.setStyle('shape', 'rect');
+            dataModel.add(line);
+
+            var block = new ht.Block();
+            block.addChild(node);
+            block.addChild(line);
+            block.setAnchor(0.1, 0.75);
+            block.setRotation(30);
+            block.setPosition(552, 144);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>点</title>
+        <style>
+            html, body {
+                padding: 0px;
+                margin: 0px;
+            }
+            .main {
+                margin: 0px;
+                padding: 0px;
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+            }
+        </style>
+        <script src="../lib/core/ht.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var dataModel = new ht.DataModel();
+            var graphView = new ht.graph.GraphView(dataModel);
+
+            var view = graphView.getView();
+            view.className = 'main';
+            document.body.appendChild(view);
+            window.addEventListener('resize', function (e) {
+                graphView.invalidate();
+            }, false);
+
+            // graphView.setEditable(true);
+            // graphView.setZoom(0.8);
+            // graphView.translate(-80, -50);
+
+            var node = new ht.Node();
+            node.setName('circle');
+            node.setPosition(70, 50);
+            node.setSize(20, 20);
+            node.setStyle('shape', 'circle');
+            node.s({// 设置节点的属性
+				'draggable': true,// 如果Node的draggable设为true，Palette可以自动处理dragstart，但是dragover和drop事件需要我们处理
+				'image.stretch': 'centerUniform',// 图片的绘制方式为非失真方式
+			});
+            dataModel.add(node);
+        </script>
+    </body>
+</html>

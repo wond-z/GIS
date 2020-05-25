@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="css/ol.css" type="text/css">
+        <title>HT-openlayers</title>
+        <style>
+            html, body {
+                padding: 0px;
+                margin: 0px;
+            }
+            .main {
+                margin: 0px;
+                padding: 0px;
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+            }
+            .mapDiv {
+                margin: 0;
+                padding: 0;
+                height: 400px;
+                width: 100%;
+            }
+        </style>
+        <script src="js/ol.js"></script>
+        <script src="../lib/core/ht.js"></script>
+        <script src="js/GraphViewControl.js"></script>
+    </head>
+    <body>
+        <!-- <div id="marker" title="Marker"></div> -->
+        <div id="map" class="mapDiv"></div>
+        <script type="text/javascript">
+        // 初始化GraphViewControl
+        var graphViewControl = new GraphViewControl();
+        // 初始化map
+        var map = new ol.Map({
+            target: 'map',
+            controls: ol.control.defaults().extend([
+                graphViewControl
+            ]),
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.TileWMS({
+                        url: 'http://vmap0.tiles.osgeo.org/wms/vmap0',
+                        params: {
+                            'LAYERS': 'basic'
+                        }
+                    })
+                })
+            ],
+            view: new ol.View({
+                projection: ol.proj.get('EPSG:4326'), // 经纬度方式定位
+                center: [118.06, 24.27],
+                zoom: 2
+            })
+        });
+
+        graphView = graphViewControl.getGraphView();
+
+        // map貌似没有初始化事件，用postrender模拟;哪位同学发现初始化事件，请告诉我们yancy@hightopo.com，谢谢^_^
+        var renderCounter = 0;
+        map.on('postrender', function(e) {
+          if (renderCounter === 0) {
+              // map初始化以后增加node
+              var dataModel = graphView.getDataModel();
+              // 随机颜色数组
+              var colors = ['red', 'green', 'black', 'yellow', 'orange', 'pink', 'blue']
+              for (var i = 0; i < 100; i++) {
+                dataModel.add(createNode(118 * Math.random(), 50 * Math.random(), '测试Node', colors[Math.floor(colors.length * Math.random())]));
+              }
+
+              renderCounter++;
+          }
+        });
+        // 创建节点
+        function createNode(lon, lat, name, color) {
+            var node = new ht.Node();
+            node.s({
+                'shape': 'circle',
+                'shape.background': color,
+                'label.background': 'rgba(255, 255, 0, 0.5)',
+                'select.type': 'circle'
+            });
+            node.setSize(20, 20);
+            node.a('coord', [lon, lat]);// 设置经纬度即可，GraphViewControl自动转成屏幕坐标展示
+            return node;
+        }
+        </script>
+    </body>
+</html>
