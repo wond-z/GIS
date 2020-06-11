@@ -33,23 +33,59 @@
     <div><span>当前层级：</span><span id="zoom"></span><span>分辨率：</span><span id="resolution"></span></div>
     <div id="map" class="map"></div>
     <script type="text/javascript">
-        var view = new ol.View({
-            center: ol.proj.transform([104, 30], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 2, // 默认显示层级
-            // minResolution: 50, // 最小分辨率
-            // maxResolution: 100, // 最大分辨率
-            resolutions: [1000, 90, 80, 1], // 分辨率（对应不同层级0-n级，共n+1层）
-            constrainResolution: true, // 约束分辨率
-        });
+        var view;
+        var layer;
+        if (window.navigator.onLine == true) {
+            console.log('online');
+            // 在线地图，加载谷歌影像地图
+            view = new ol.View({
+                center: ol.proj.transform([108.94703, 34.25943], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 2, // 默认显示层级
+                // minResolution: 50, // 最小分辨率
+                // maxResolution: 100, // 最大分辨率
+                // resolutions: [1000, 90, 80, 1], // 分辨率（对应不同层级0-n级，共n+1层）
+                constrainResolution: true, // 约束分辨率
+            });
+            layer = new ol.layer.Tile({
+                source: new ol.source.TileImage({
+                    url: 'http://mt2.google.cn/vt/lyrs=y&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=G'
+                })
+            });
+            
+        } else {
+            console.log('offline');
+            view = new ol.View({
+                projection: ol.proj.get('EPSG:4326'),
+                center: [108.94703965, 34.25943331],
+                // center: ol.proj.transform([108.94703965, 34.25943331], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 0, // 默认显示层级
+                // minResolution: 50, // 最小分辨率
+                // maxResolution: 100, // 最大分辨率
+                resolutions: [0.001373291015625, 0.0006866455078125, 0.00034332275390625, 0.000171661376953125, 0.0000858306884765625, 0.00004291534423828125, 0.000021457672119140625], // 分辨率（对应不同层级0-n级，共n+1层）
+                constrainResolution: true, // 约束分辨率
+            });
+            // 离线地图图层
+            layer = new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: './data/tiles/{z}/{x}/{y}.png',
+                    // tileUrlFunction: function(zxy) {
+                    //     return require('@/assets/tiles/' + zxy[0] + '/' + zxy[1] + '/' + zxy[2] + 'png')
+                    // },
+                    wrapX: false
+                })
+            });
+        }
 
         var map = new ol.Map({
             layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                })
+                layer,
+                // new ol.layer.Tile({
+                //     source: new ol.source.OSM()
+                // })
             ],
             target: 'map',
-            view: view
+            view: view,
+            interaction: [new ol.interaction.DragPan({ kinetic: false })]
         });
 
         var mouseWheelZoom = new ol.interaction.MouseWheelZoom({
