@@ -46,9 +46,10 @@
     <div id="map" class="map"></div>
 
     <script type="text/javascript">
+        var URL = window.location.protocol+"//"+window.location.host;
         // 矢量数据
         var vectorSource = new ol.source.Vector({
-            url: './data/draw.json',
+            url: URL + '/GIS/openlayers/data/draw.json',
             format: new ol.format.GeoJSON()
         });
         // 矢量图层，将矢量数据添加到矢量图层中
@@ -91,7 +92,7 @@
             view: new ol.View({
                 center: ol.proj.fromLonLat([103.40, 36.03]), // 兰州经纬度
                 // center: [-11000000, 4600000],
-                zoom: 4
+                zoom: 0
             })
         });
 
@@ -175,7 +176,7 @@
 
         setTimeout(function() {
             // map.addLayer(vectorLayer);
-            $.getJSON('http://127.0.0.1:6868/openLayers/data/draw.json', function(res) {
+            $.getJSON(URL + '/GIS/openlayers/data/draw.json', function(res) {
                 console.log(res);
                 var layer = new ol.layer.Vector({
                     source: new ol.source.Vector({

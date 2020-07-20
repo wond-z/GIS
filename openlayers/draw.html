@@ -95,11 +95,11 @@
             interactions: ol.interaction.defaults().extend([dragAndDropInteraction]),
             target: 'map',
             layers: [tileLayer, vectorLayer],
-            // layers: [mapLayer],
+            // layers: [mapLayer, vectorLayer],
             view: new ol.View({
-                center: ol.proj.fromLonLat([103.40, 36.03]), // 兰州经纬度
+                center: ol.proj.fromLonLat([0, 0]), // 兰州经纬度
                 // center: [-11000000, 4600000],
-                zoom: 4
+                zoom: 0
             })
         });
 
