@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ArcGIS Map</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: calc(100% - 200px);
+        }
+        .control {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+        }
+
+        .control button {
+            display: block;
+            margin: 10px auto;
+            width: 150px;
+            height: 50px;
+        }
+    </style>
+    <link rel="stylesheet" href="./javascript/4.25/esri/themes/light/main.css">
+    <script src="./javascript/4.25/init.js"></script>
+    <!-- <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.25/"></script> -->
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div class="control">
+        <button id="zoomView">放大图层</button>
+        <button id="movePosition">移动位置</button>
+        <button id="addMarkers">添加标注</button>
+    </div>
+    <script>
+        var points = [
+            {
+                x: 116.277177,
+                y: 39.998089,
+                group: '门站',
+                name: '北张门站'
+            }
+        ];
+        var map;
+        var mapView;
+        var graphicLayer;
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Basemap",
+            "esri/geometry/SpatialReference",
+            "esri/layers/WebTileLayer",
+            "esri/Graphic",
+            "esri/layers/GraphicsLayer",
+            "esri/geometry/Point",
+            "esri/symbols/TextSymbol",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/PictureMarkerSymbol",
+            "esri/symbols/Font",
+            ], function(esriConfig, Map, MapView, Basemap, SpatialReference, WebTileLayer, Graphic, GraphicsLayer, Point, TextSymbol, SimpleMarkerSymbol, PictureMarkerSymbol, Font) {
+            esriConfig.apiKey = "YOUR_API_KEY";
+
+            map = new Map({
+                // basemap: "arcgis-topographic", // 在线地图
+                // 离线地图
+                basemap: new Basemap({
+                    baseLayers: [
+                        new WebTileLayer({
+                            // 必须为服务器路径
+                            urlTemplate: "http://127.0.0.1:6868/arcgis_js_api/haidianqu/{level}/{col}/{row}.png",
+                            subDomains: ["a", "b", "c", "d"]
+                        })
+                    ]
+                })
+            });
+
+            mapView = new MapView({
+                map: map,
+                center: [116.277177, 39.998089],
+                zoom: 8,
+                container: 'viewDiv'
+            });
+
+            //创建图层
+            graphicLayer = new GraphicsLayer({
+                visible: false
+            });
+            //把图层添加到地图上
+            map.layers.add(graphicLayer);
+
+
+            // map.on('load', function() {
+            //     points.forEach((item) => {
+            //         addMarker(item);
+            //     });
+            // });
+
+            const point = { //Create a point
+                type: "point",
+                longitude: 116.277177,
+                latitude: 39.998089
+            };
+            // const simpleMarkerSymbol = {
+            //     type: "simple-marker",
+            //     color: [226, 119, 40],  // Orange
+            //     outline: {
+            //         color: [255, 255, 255], // White
+            //         width: 1
+            //     }
+            // };
+            
+            // let polylineAtt = {
+            //     Name: "Keystone Pipeline",
+            //     Owner: "TransCanada"
+            // };
+
+            var symbol = {
+                type: "picture-marker",
+                url: "http://127.0.0.1:6868/arcgis_js_api/images/star.png",//图片地址
+                width: "64px",
+                height: "64px"
+            };
+
+            // 弹窗
+            const popupTmp = {
+                "title": "Trailhead",
+                "content": `test content<a href="https://www.baidu.com" target="_blank">点击跳转页面</a>`, // 在弹窗中添加页面跳转功能
+            }
+
+            mapView.popup = {
+                collapseEnabled : false, // 移除title点击折叠功能
+                dockOptions: {
+                    buttonEnabled: false // 隐藏固定标签页
+                },
+                actions: [] // 清空事件按钮 （缩放至、...）
+            }
+            // const pointGraphic = new Graphic(new Point(116.277177, 39.998089), symbol, popupTmp);
+
+            // const pointGraphic = new Graphic({
+            //     geometry: point,
+            //     symbol: simpleMarkerSymbol,
+            //     attributes: polylineAtt,
+            //     popupTemplate: popupTmp,
+            // });
+            const pointGraphic = new Graphic({
+                geometry: point,
+                symbol: symbol,
+                // attributes: polylineAtt,
+                popupTemplate: popupTmp,
+            });
+            
+            graphicLayer.add(pointGraphic);
+        });
+
+        document.getElementById('zoomView').onclick = function() {
+            mapView.goTo({
+                center: [116.277177, 39.998089],
+                zoom: 14,
+            }, {
+               duration: 2000, //视角跳转时长为2秒，
+            }).then(function () {
+               console.log("放大完成");
+               // 显示标记信息
+               graphicLayer.visible = true;
+            })
+        };
+
+        document.getElementById('movePosition').onclick = function() {
+            mapView.goTo({
+                center: [116.270177, 39.990089],
+            }, {
+               duration: 2000, //视角跳转时长为2秒，
+            }).then(function () {
+               console.log("移动完成");
+            })
+        };
+
+        document.getElementById('addMarkers').onclick = function() {
+            points.forEach((item) => {
+                addMarker(item);
+            });
+        };
+
+
+    </script>
+</body>
+
+</html>
+
