@@ -31,11 +31,16 @@
             width: 150px;
             height: 50px;
         }
+        .popup-link {
+            color: blue;
+            cursor: pointer;
+        }
     </style>
     <link rel="stylesheet" href="./javascript/4.25/esri/themes/light/main.css">
     <script src="./javascript/4.25/init.js"></script>
     <!-- <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css">
     <script src="https://js.arcgis.com/4.25/"></script> -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 
 <body>
@@ -122,7 +127,7 @@
             //         width: 1
             //     }
             // };
-            
+
             // let polylineAtt = {
             //     Name: "Keystone Pipeline",
             //     Owner: "TransCanada"
@@ -135,10 +140,17 @@
                 height: "64px"
             };
 
+            function populationChange(feature) {
+                console.log(feature)
+                return '<div class="gogo">这是什么</div>';
+            };
+
             // 弹窗
             const popupTmp = {
                 "title": "Trailhead",
-                "content": `test content<a href="https://www.baidu.com" target="_blank">点击跳转页面</a>`, // 在弹窗中添加页面跳转功能
+                // "content": `test content<a href="https://www.baidu.com" target="_blank">点击跳转页面</a>`, // 在弹窗中添加页面跳转功能
+                // "content": populationChange
+                "content": `<div class="popup-link">点击跳转</div>` // 给弹出内容添加指定类名
             }
 
             mapView.popup = {
@@ -162,8 +174,12 @@
                 // attributes: polylineAtt,
                 popupTemplate: popupTmp,
             });
-            
+
             graphicLayer.add(pointGraphic);
+
+            $('.esri-ui-inner-container').on('click', '.popup-link', function() {
+                alert('执行跳转了')
+            })
         });
 
         document.getElementById('zoomView').onclick = function() {
@@ -196,8 +212,8 @@
         };
 
 
+
     </script>
 </body>
 
 </html>
-
