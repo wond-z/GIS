@@ -35,12 +35,15 @@
             color: blue;
             cursor: pointer;
         }
+        .esri-popup__footer {
+            display: none!important;
+        }
     </style>
     <link rel="stylesheet" href="./javascript/4.25/esri/themes/light/main.css">
     <script src="./javascript/4.25/init.js"></script>
     <!-- <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css">
     <script src="https://js.arcgis.com/4.25/"></script> -->
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script type="text/javascript" src="./jquery.min.js"></script>
 </head>
 
 <body>
@@ -56,7 +59,12 @@
                 x: 116.277177,
                 y: 39.998089,
                 group: '门站',
-                name: '北张门站'
+                name: '颐和园'
+            },
+            {
+                x: 116.312678,
+                y: 39.981782,
+                name: '苏州街'
             }
         ];
         var map;
@@ -86,7 +94,7 @@
                     baseLayers: [
                         new WebTileLayer({
                             // 必须为服务器路径
-                            urlTemplate: "http://127.0.0.1:6868/arcgis_js_api/haidianqu/{level}/{col}/{row}.png",
+                            urlTemplate: location.origin + "/haidianqu/{level}/{col}/{row}.png",
                             subDomains: ["a", "b", "c", "d"]
                         })
                     ]
@@ -102,11 +110,14 @@
 
             //创建图层
             graphicLayer = new GraphicsLayer({
-                visible: false
+                // visible: false
             });
             //把图层添加到地图上
             map.layers.add(graphicLayer);
 
+            // 设置地图坐标系类型
+            var spatialReference = new SpatialReference(4326);
+            map.spatialReference = spatialReference;
 
             // map.on('load', function() {
             //     points.forEach((item) => {
@@ -135,7 +146,7 @@
 
             var symbol = {
                 type: "picture-marker",
-                url: "http://127.0.0.1:6868/arcgis_js_api/images/star.png",//图片地址
+                url: location.origin + "/images/star.png",//图片地址
                 width: "64px",
                 height: "64px"
             };
@@ -175,13 +186,66 @@
                 popupTemplate: popupTmp,
             });
 
-            graphicLayer.add(pointGraphic);
+            // graphicLayer.add(pointGraphic);
 
-            $('.esri-ui-inner-container').on('click', '.popup-link', function() {
-                alert('执行跳转了')
+            $('.esri-ui-inner-container').on('click', '.popup-link', function(e) {
+                console.log(e);
+                // alert('执行跳转了')
             })
+
+            document.getElementById('addMarkers').onclick = function() {
+                points.forEach((item) => {
+                    addMarker(item);
+                });
+            };
+
+            function addMarker(pointInfo) {
+                let itempoint = new Point(pointInfo.x, pointInfo.y, map.spatialReference);
+                // 定义点标注
+                var markerSymbol = new SimpleMarkerSymbol({
+                    style: "circle",
+                    size: 12,
+                    color: [255, 0, 0, 255],
+                    outline: {
+                        color: [0, 0, 0, 255],
+                        width: 1,
+                        type: "simple-line",
+                        style: "solid"
+                    }
+                });
+
+                // 圆点标注属性
+                var pointAttr = {
+                    type: 'point',
+                    group: pointInfo.group,
+                    name: pointInfo.name,
+                    info: '' // 用于占位，具体变量数据刷新在定时器中完成
+                };
+
+                // 气泡模板
+                // var infoTemplate = new esri.InfoTemplate(pointInfo.name, "${info}");
+
+                // 弹窗
+                const popupTmp = {
+                    "title": pointInfo.name,
+                    // "content": `test content<a href="https://www.baidu.com" target="_blank">点击跳转页面</a>`, // 在弹窗中添加页面跳转功能
+                    // "content": populationChange
+                    "content": `<div>
+                            <ul>
+                                <li>位置：${pointInfo.x}, ${pointInfo.y}</li>
+                                <li>描述：xxx</li>
+                            </ul>
+                            <span class="popup-link">点击进入</span>
+                        </div>` // 给弹出内容添加指定类名
+                }
+                var graphic = new Graphic(itempoint, markerSymbol, pointAttr, popupTmp);
+
+                // 添加图形到图层
+                graphicLayer.add(graphic);
+            }
         });
 
+        // 放大图层，并展示标记
         document.getElementById('zoomView').onclick = function() {
             mapView.goTo({
                 center: [116.277177, 39.998089],
@@ -205,13 +269,7 @@
             })
         };
 
-        document.getElementById('addMarkers').onclick = function() {
-            points.forEach((item) => {
-                addMarker(item);
-            });
-        };
-
-
+        
 
     </script>
 </body>

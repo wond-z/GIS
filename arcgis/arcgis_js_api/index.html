@@ -51,7 +51,7 @@
 
             var tileLayer = new WebTileLayer({
                 // 必须为服务器路径
-                urlTemplate: "http://127.0.0.1:6868/arcgis_js_api/roadmap/{level}/{col}/{row}.png",
+                urlTemplate: location.origin + "/roadmap/{level}/{col}/{row}.png",
                 subDomains: ["a", "b", "c", "d"]
             });
 
