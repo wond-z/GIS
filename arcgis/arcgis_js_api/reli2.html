@@ -21,20 +21,6 @@
             width: calc(100% - 200px);
         }
 
-        .control {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 200px;
-        }
-
-        .control button {
-            display: block;
-            margin: 10px auto;
-            width: 150px;
-            height: 50px;
-        }
-
         .popup-link {
             color: blue;
             cursor: pointer;
@@ -116,7 +102,7 @@
             // 创建区域标记图层
             window.graphicLayer = new GraphicsLayer({
                 maxScale: 70000,
-                // visible: true // 图层默认设置隐藏，当点击 放大地图 按钮后显示图层
+                // visible: true // 图层默认设置显示
             });
 
             // 创建换热站标记图层
@@ -143,7 +129,7 @@
                     name: '西城区'
                 }
             ];
-
+            // 定义坐标点（换热站）
             const points2 = [
                 {
                     x: 116.303084,
@@ -290,28 +276,31 @@
                 }
             }
 
+            // 遍历填充区域点信息到图层graphicLayer
             points.forEach((item) => {
                 addMarker(item, 1);
             });
 
+            // 遍历填充换热站点信息到图层heatExchangeLayer
             points2.forEach((item) => {
                 addMarker(item, 0);
             });
 
+            // 弹出气泡中点击跳转执行缩放
             $('.esri-ui-inner-container').on('click', '.popup-link', function (e) {
                 // 获取点击点坐标
                 const pos = JSON.parse($($('.data-pos')[0]).text());
-                // 关闭弹窗
+                // 关闭气泡弹窗
                 $('.esri-icon-close').click();
                 mapView.goTo({
                     center: pos,
                     zoom: 14
                 }, {
-                    duration: 2000, //视角跳转时长为2秒，
+                    duration: 2000, // 视角跳转时长为2秒
                 }).then(function () {
                     console.log("移动完成");
                 })
-            })
+            });
         });
     </script>
 </body>
