@@ -74,6 +74,12 @@
         // }
         // addLayer();
 
+        // 修改拖拽惯性效果
+        var CesiumViewerSceneController = viewer.scene.screenSpaceCameraController;
+        CesiumViewerSceneController.inertiaSpin = 0.1;
+        CesiumViewerSceneController.inertiaTranslate = 0.1;
+        CesiumViewerSceneController.inertiaZoom = 0.1;
+
         const options = {
             url: '/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板
             style: 'normal', // style: img、vec、normal、dark
