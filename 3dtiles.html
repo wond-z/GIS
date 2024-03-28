@@ -79,14 +79,13 @@
     <script>
         var viewer = new Cesium.Viewer("cesiumContainer");
 
-        // var tileset = new Cesium.Cesium3DTileset({
-        //     url: './SampleData/models/3dtiles/tileset.json'
-        // });
-        let tileset;
         async function addModel() {
-            tileset = await Cesium.Cesium3DTileset.fromUrl('./SampleData/models/3dtiles/tileset.json');
+            const tileset = await Cesium.Cesium3DTileset.fromUrl('./SampleData/models/3dtiles/tileset.json');
             viewer.scene.primitives.add(tileset);
             viewer.zoomTo(tileset);
+
+            // 调整模型高度
+            changeHeight(tileset, -420);
         }
         addModel();
 
@@ -110,9 +109,6 @@
             tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
         }
         // });
-        // 调整模型高度
-        changeHeight(tileset, -420);
-
     </script>
 </body>
 

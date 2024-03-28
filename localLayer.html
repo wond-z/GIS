@@ -55,7 +55,7 @@
         // viewer.imageryLayers.add(new Cesium.ImageryLayer(new BaiduImageryProvider(options), {}), 0);
         
 
-        // 加载高德离线瓦片图
+        // 加载高德离线瓦片图（使用cesium-map扩展加载）
         // var options = {
         //     url: '/SampleData/tiles/amap/{z}/{x}/{y}.jpg', // 本地瓦片的URL模板
         //     style: 'img', // style: img、elec、cva
@@ -65,20 +65,57 @@
 
 
         // 加载高德离线瓦片图
-        // var layer = new Cesium.UrlTemplateImageryProvider({
-        //     url:'/SampleData/tiles/amap/{z}/{x}/{y}.jpg',
-        //     fileExtension:"jpg"
-        // });
-        // viewer.imageryLayers.addImageryProvider(layer);
+        var layer = new Cesium.UrlTemplateImageryProvider({
+            url:'/SampleData/tiles/amap/{z}/{x}/{y}.jpg',
+            fileExtension:"png"
+        });
+        viewer.imageryLayers.addImageryProvider(layer);
 
         // 高德在线影像图
-        var layer = new Cesium.UrlTemplateImageryProvider({
-            url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
-            minimumLevel: 3,
-            maximumLevel: 18
-        })
-           
-        viewer.imageryLayers.addImageryProvider(layer);
+        // var layer = new Cesium.UrlTemplateImageryProvider({
+        //     url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
+        //     minimumLevel: 3,
+        //     maximumLevel: 18
+        // })
+        // viewer.imageryLayers.addImageryProvider(layer);
+
+
+        // 定位到指定位置
+        // var cartographic = Cesium.Cartographic.fromDegrees(105.588861,29.425496);
+        // var cartesian = Cesium.Cartographic.toCartesian(cartographic);
+        // viewer.camera.setView({
+        //     destination : cartesian,
+        //     orientation : {
+        //         heading : Cesium.Math.toRadians(0.0),
+        //         pitch : Cesium.Math.toRadians(-90.0),
+        //         roll : 0.0
+        //     }
+        // });
+
+
+
+
+        // var longitude = 105.588861;
+        // var latitude = 29.425496;
+        // var height = 100; // 高度，单位为米，0表示地表
+        // // 将经纬度转换为Cartesian3坐标
+        // var position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+        // // 创建Entity对象
+        // var entity = viewer.entities.add({
+        //     position : position,
+        //     // 添加一个点图形
+        //     billboard : {
+        //         // 你可以设置点的大小、颜色、垂直偏移等属性
+        //         image : './pic.jpg', // 设置点的图片
+        //         width : 32, // 点的宽度
+        //         height : 32, // 点的高度
+        //         verticalOrigin : Cesium.VerticalOrigin.BOTTOM, // 垂直方向的原点
+        //         // pixelOffset : new Cesium.Cartesian2(0, -20), // 在位置上的偏移量
+        //         // scaleByDistance : new Cesium.NearFarScalar(1.5e5, 50, 1e5, 0.0) // 根据距离调整大小
+        //     }
+        // });
+        // // 如果需要，可以调整相机的视图以显示这个点
+        // viewer.zoomTo(entity);
 
 
     </script>
