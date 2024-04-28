@@ -95,6 +95,19 @@
             createModel("./SampleData/models/CesiumAir/Cesium_Air.glb", 5.0);
         }, 1000);
 
+
+        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        // 设置左键点击事件
+        handler.setInputAction(function (event) {
+            // 获取 pick 拾取对象
+            var pick = viewer.scene.pick(event.position);
+            // 判断是否获取到了 pick 
+            if (Cesium.defined(pick)) {
+                // 修改拾取到的entity的样式
+                console.log(pick);
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
     </script>
 </body>
 
