@@ -136,6 +136,56 @@
             let timeObj = getSiteTimes(positions, speed * config.rate);
             console.log(timeObj)
 
+
+            // 延迟节流，首次及后续都需要间隔一段时间触发才生效
+            function throttleDelayExecution(fn, delay){
+                let last = Date.now(); // 使用时间戳实现
+                return function (){
+                    let now = Date.now();
+                    if(now - last >= delay){
+                        fn.apply(this, arguments);
+                        last = now;
+                    }
+                }
+            }
+
+
+            let coverPositions = [positions[0]];
+            let coverLine = viewer.entities.add({
+                polyline: {
+                    positions: [positions[0], positions[1]],
+                    width: 10, // 设置线段宽度
+                    material: Cesium.Color.RED.withAlpha(0.5), // 设置线段颜色，带有透明度
+                    loop: false // 设置线段是否闭合
+                }
+            });
+            // const adjustRate = (clock) => {
+            //     // console.log(clock)
+            //     // console.log(clock.currentTime)
+            //     let currentPos = animateEntity.position.getValue(clock.currentTime);
+            //     if (currentPos) {
+            //         // currentPos.z = 4000000;
+            //         coverPositions.push(currentPos);
+            //         console.log(coverPositions)
+            //         // drawHis(prevPos, currentPos)
+            //         coverLine.polyline.position = coverPositions;
+            //     }
+
+            //     // if (Cesium.JulianDate.compare(clock.currentTime, julianEnd) > 0) {
+            //     //     if (clock.multiplier === 50) {
+            //     //         viewer.clock.multiplier = 1;
+            //     //     }
+            //     //     viewer.clock.onTick.removeEventListener(adjustRate);
+            //     // }
+            // };
+
+            // // function drawHis(prev, cur) {
+            // //     console.log(cur)
+                
+            // //     prevPos = cur;
+            // // }
+            // viewer.clock.onTick.addEventListener(throttleDelayExecution(adjustRate, 500));
+
             animateEntity.position = createPositionProperty(positions, timeObj);
             // animateEntity.rotation = createOrientationProperty(positions);
             // 循环播放
@@ -150,9 +200,7 @@
             }
         }
 
-        viewer.clock.tick.addEventListener(function(clock) {
-            console.log(clock.currentTime.seconds);
-        }, viewer.scene);
+        
         
         const lnglatArr = [
             [121.527589, 38.957547],
