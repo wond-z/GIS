@@ -49,6 +49,48 @@
         // });
         // // 隐藏logo
         // viewer._cesiumWidget._creditContainer.style.display = "none";
+
+        // 添加鼠标移动事件监听器
+        viewer.scene.canvas.addEventListener('mousemove', function(event) {
+            // 获取鼠标在canvas上的相对位置
+            var position = new Cesium.Cartesian2(event.clientX, event.clientY);
+
+            // 转换鼠标位置为归一化设备坐标（NDC），范围在[-1, 1]之间
+            var ndc = viewer.scene.camera.pickEllipsoid(position, viewer.scene.globe.ellipsoid);
+
+            // 如果ndc有效（即鼠标点击在了地球上），则获取其经纬度
+            if (Cesium.defined(ndc)) {
+                var cartographic = Cesium.Cartographic.fromCartesian(ndc);
+
+                // 转换为度数格式
+                var longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                var latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                // 打印或显示经纬度
+                console.log('Longitude: ' + longitude + ', Latitude: ' + latitude);
+            }
+        });
+
+        // 添加鼠标点击事件监听器
+        viewer.scene.canvas.addEventListener('click', function(event) {
+            // 获取鼠标在canvas上的相对位置
+            var position = new Cesium.Cartesian2(event.clientX, event.clientY);
+
+            // 转换鼠标位置为归一化设备坐标（NDC），范围在[-1, 1]之间
+            var ndc = viewer.scene.camera.pickEllipsoid(position, viewer.scene.globe.ellipsoid);
+
+            // 如果ndc有效（即鼠标点击在了地球上），则获取其经纬度
+            if (Cesium.defined(ndc)) {
+                var cartographic = Cesium.Cartographic.fromCartesian(ndc);
+
+                // 转换为度数格式
+                var longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                var latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                // 打印或显示经纬度
+                console.log('Longitude: ' + longitude + ', Latitude: ' + latitude);
+            }
+        });
     </script>
 </body>
 
