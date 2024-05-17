@@ -17,7 +17,25 @@
         import { Graph, CoordinateLookup, buildGeoJsonPath, buildEdgeIdList } from './shortestPath/index_copy.js';
 
         var viewer = new Cesium.Viewer('cesiumContainer', {
-            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+            sceneMode: Cesium.SceneMode.SCENE3D, // 设置为2D模式
+            // 地形服务
+            terrainProvider: await Cesium.createWorldTerrainAsync({
+                requestWaterMask: true, // 开启水面波纹
+                requestVertexNormals: true // 开启地形光照
+            })
+            // // 使用谷歌地球的高程数据
+            // terrainProvider: Cesium.GoogleEarthEnterpriseTerrainProvider({
+            // url: "http://www.example.com",
+            // metadata: metaOptions,
+            // }),
+            
+            // // 使用 VR-TheWorld Server的高程数据
+            // terrainProvider: Cesium.VRTheWorldTerrainProvider({
+            //     url: "http://www.example.com",
+            // }),
+
+            // // 使用 光滑椭球体(默认无高度)
+            // terrainProvider: Cesium.EllipsoidTerrainProvider(),
         });
 
         // 用户原始数据
@@ -3473,7 +3491,7 @@
         async function addModel(json) {
             const geoJson = parseGeojson(json);
             const dataSource = await Cesium.GeoJsonDataSource.load(geoJson, {
-                stroke: Cesium.Color.YELLOW.withAlpha(0.5),
+                stroke: Cesium.Color.WHITE,
                 fill: Cesium.Color.PINK,
                 strokeWidth: 5,
                 markerSymbol: 'aaa'
@@ -3529,21 +3547,21 @@
             // 添加最短路径
             drawPolyline(pointArr, {
                 width: 5,
-                color: Cesium.Color.fromCssColorString('rgba(0, 0, 255, 0.5)'),
+                color: Cesium.Color.fromCssColorString('rgba(255, 0, 0, 0.5)'),
                 lineHeight: 2
             });
 
             // 绘制重复路径
-            const repeatPath = getRepeatPath(pointArr);
-            if (repeatPath.length) {
-                for (let i = 0; i < repeatPath.length; i++) {
-                    drawPolyline(repeatPath[i], {
-                        width: 9,
-                        color: Cesium.Color.WHITE.withAlpha(0.5),
-                        lineHeight: 1
-                    });
-                }
-            }
+            // const repeatPath = getRepeatPath(pointArr);
+            // if (repeatPath.length) {
+            //     for (let i = 0; i < repeatPath.length; i++) {
+            //         drawPolyline(repeatPath[i], {
+            //             width: 9,
+            //             color: Cesium.Color.WHITE.withAlpha(0.5),
+            //             lineHeight: 1
+            //         });
+            //     }
+            // }
 
             // 开始路径回放
             const config = {
@@ -3744,30 +3762,30 @@
             config.rate = config.rate ? config.rate : 1;
 
             // 移动标记定义
-            // let animateEntity = viewer.entities.add({
-            //     // 位置信息随时间变化property
-            //     position: positions[0],
-            //     // 实体方向
-            //     // orientation: new Cesium.VelocityOrientationProperty(property),
-            //     billboard: {
-            //         image: './SampleData/image/pic.jpg',
-            //         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            //         scale: 0.02,
-            //         rotation : 0
-            //     },
-            // });
+            let animateEntity = viewer.entities.add({
+                // 位置信息随时间变化property
+                position: positions[0],
+                // 实体方向
+                // orientation: new Cesium.VelocityOrientationProperty(property),
+                billboard: {
+                    image: './SampleData/image/pic.jpg',
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    scale: 0.02,
+                    rotation : 0
+                },
+            });
 
             // 模型可支持转向
-            let animateEntity = viewer.entities.add({
-                name: 'model',
-                model: {
-                    uri: "/SampleData/models/CesiumAir/Cesium_Air.glb",
-                    show: true,
-                    scale: 0.5,
-                },
-                // position: createPositionProperty(positions, timeObj),
-                // orientation: new Cesium.VelocityOrientationProperty(createPositionProperty(positions, timeObj))
-            });
+            // let animateEntity = viewer.entities.add({
+            //     name: 'model',
+            //     model: {
+            //         uri: "/SampleData/models/CesiumAir/Cesium_Air.glb",
+            //         show: true,
+            //         scale: 0.5,
+            //     },
+            //     // position: createPositionProperty(positions, timeObj),
+            //     // orientation: new Cesium.VelocityOrientationProperty(createPositionProperty(positions, timeObj))
+            // });
 
             let timeObj = getSiteTimes(positions, speed * config.rate);
             console.log(timeObj)
