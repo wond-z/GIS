@@ -29,6 +29,7 @@
         <button id="pathReplayPause">回放暂停</button>
         <button id="pathReplayResume">回放继续</button>
         <button id="go">一键直达</button>
+        <button id="pathReplayStop">停止回放</button>
     </div>
     <script type="module">
         // 引入模块，用于路径寻优
@@ -42,6 +43,7 @@
         document.getElementById('pathReplayPause').addEventListener('click', pathReplayPause, false);
         document.getElementById('pathReplayResume').addEventListener('click', pathReplayResume, false);
         document.getElementById('go').addEventListener('click', go, false);
+        document.getElementById('pathReplayStop').addEventListener('click', pathReplayStop, false);
 
         // 地图初始化
         window.viewer = new Cesium.Viewer('cesiumContainer', {
@@ -146,6 +148,7 @@
 
             // 移动标记，使用模型可支持转向
             let animateEntity = viewer.entities.add({
+                id: 'playbackMark',
                 name: 'model',
                 model: {
                     uri: "/SampleData/models/CesiumAir/Cesium_Air.glb",
@@ -162,6 +165,7 @@
             
             // 实时移动轨迹
             viewer.entities.add({
+                id: 'playbackPath',
                 name: 'line',
                 polyline: {
                     positions: new Cesium.CallbackProperty(time => {
@@ -203,6 +207,20 @@
         // 路径回放继续
         function pathReplayResume() {
             viewer.clock.shouldAnimate = true; // 开始动画
+        }
+
+        function pathReplayStop() {
+            viewer.clock.shouldAnimate = false; // 停止动画
+            // 删除移动标记
+            const entityMark = viewer.entities.getById('playbackMark');
+            if (entityMark) {
+                viewer.entities.remove(entityMark);
+            }
+            // 删除移动路径
+            const entityPath = viewer.entities.getById('playbackPath');
+            if (entityPath) {
+                viewer.entities.remove(entityPath);
+            }
         }
 
         // ========================== 其它依赖函数 ============================
