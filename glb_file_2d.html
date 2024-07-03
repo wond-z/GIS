@@ -97,7 +97,10 @@
                     // maximumScale: 20000,
                     scale: 200 // 指定模型的缩放值
                 },
-                orientation : new Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Z, Cesium.Math.toRadians(45.0)) // 设置绕Y轴旋转45度
+                // 单独设置沿某轴旋转
+                // orientation : new Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(65)) // 设置绕Y轴旋转45度
+                // 设置三个轴同时旋转，heading为90度(z)，pitch为45度(y)，roll为0度(x)
+                orientation: Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(45), Cesium.Math.toRadians(45)))
             });
             // viewer.trackedEntity = entity; // 跟踪实体，视角固定到指定的实体上
             viewer.camera.flyTo({
