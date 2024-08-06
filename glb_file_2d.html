@@ -47,6 +47,8 @@
             sceneMode: Cesium.SceneMode.SCENE2D // 设置场景为2d，也可以直接写2
         });
 
+        let entity;
+        let position;
         function createModel(url, height) {
             viewer.entities.removeAll();
 
@@ -58,6 +60,7 @@
 
             // 将笛卡尔坐标转换为地理坐标（经纬度）
             var cartographic = Cesium.Cartographic.fromCartesian(centerCartesian);
+            debugger
 
             // 提取经度和纬度
             var longitude = Cesium.Math.toDegrees(cartographic.longitude);
@@ -66,7 +69,7 @@
             // 输出经纬度
             console.log("屏幕中心的经纬度是:", longitude, latitude);
 
-            const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, 5000);
+            position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
 
             // const center = new Cesium.Cartesian2(viewer.canvas.clientWidth / 2, viewer.canvas.clientHeight / 2);
             // const position = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(center), viewer.scene);
@@ -82,8 +85,7 @@
                 position,
                 hpr
             );
-
-            const entity = viewer.entities.add({
+            entity = viewer.entities.add({
                 id: 'threeModel',
                 name: url,
                 position: position,
@@ -93,24 +95,81 @@
                 },
                 model: {
                     uri: url,
-                    // minimumPixelSize: 128,
-                    // maximumScale: 20000,
-                    scale: 200 // 指定模型的缩放值
+                    minimumPixelSize: 128,
+                    maximumScale: 20000,
+                    scale: 20 // 指定模型的缩放值
                 },
                 // 单独设置沿某轴旋转
                 // orientation : new Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(65)) // 设置绕Y轴旋转45度
                 // 设置三个轴同时旋转，heading为90度(z)，pitch为45度(y)，roll为0度(x)
-                orientation: Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(45), Cesium.Math.toRadians(45)))
+                // orientation: Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(90), Cesium.Math.toRadians(45)))
+                orientation: Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(90), Cesium.Math.toRadians(45)))
             });
             // viewer.trackedEntity = entity; // 跟踪实体，视角固定到指定的实体上
             viewer.camera.flyTo({
-                destination : position, // 目标位置
-                duration : 1.0 // 移动持续时间，单位为秒
+                destination: position, // 目标位置
+                duration: 1.0 // 移动持续时间，单位为秒
             });
         }
 
+        createModel("./SampleData/models/CesiumAir/Cesium_Air.glb", 5.0);
         setTimeout(() => {
-            createModel("./SampleData/models/CesiumAir/Cesium_Air.glb", 5.0);
+            // 获取模型的orientation（如果它是一个四元数）
+            var quaternion = entity.orientation.getValue();
+
+            // 检查orientation是否是四元数
+            if (quaternion instanceof Cesium.Quaternion) {
+                // Cesium.Quaternion.toEulerAngles = function(quaternion) {
+                //     // 提取四元数的组件
+                //     var x = quaternion.x;
+                //     var y = quaternion.y;
+                //     var z = quaternion.z;
+                //     var w = quaternion.w;
+
+                //     // 使用公式计算欧拉角（滚转、俯仰、偏航）
+                //     // 注意：这里的公式取决于你的旋转顺序（XYZ, YZX, ZXY等）
+                //     // 这个示例使用ZXY旋转顺序（偏航-俯仰-滚转）
+                //     var roll  = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)); // roll (x-axis rotation)
+                //     var pitch = Math.asin(2 * (w * y - z * x)); // pitch (y-axis rotation)
+                //     var yaw   = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)); // yaw (z-axis rotation)
+
+                //     // 将欧拉角从弧度转换为角度
+                //     roll  = Cesium.Math.toDegrees(roll);
+                //     pitch = Cesium.Math.toDegrees(pitch);
+                //     yaw   = Cesium.Math.toDegrees(yaw);
+
+                //     return {
+                //         roll: roll,
+                //         pitch: pitch,
+                //         yaw: yaw
+                //     }
+                // }
+                
+                console.log(new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(90), Cesium.Math.toRadians(45)))
+                console.log(Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(45), Cesium.Math.toRadians(90), Cesium.Math.toRadians(45))))
+
+                // 将四元数转换为欧拉角（弧度）
+                // var eulerAnglesInRadians = Cesium.Quaternion.toEulerAngles(quaternion);
+
+                // var hpr = Cesium.HeadingPitchRoll.fromQuaternion(quaternion);
+                
+
+                var mtx3 = Cesium.Matrix3.fromQuaternion(quaternion);
+                var mtx4 = Cesium.Matrix4.fromRotationTranslation(mtx3, position, new Cesium.Matrix4());
+                var hpr = Cesium.Transforms.fixedFrameToHeadingPitchRoll(mtx4);
+                console.log(hpr)
+
+                // 将欧拉角从弧度转换为角度
+                var rollInDegrees = Cesium.Math.toDegrees(hpr.roll);
+                var pitchInDegrees = Cesium.Math.toDegrees(hpr.pitch);
+                var yawInDegrees = Cesium.Math.toDegrees(hpr.heading);
+
+                console.log('Roll:', rollInDegrees, 'Pitch:', pitchInDegrees, 'Yaw:', yawInDegrees);
+                
+            } else {
+                // orientation可能是一个字符串或其他表示形式，需要相应处理
+                console.log('Orientation is not a quaternion');
+            }
         }, 1000);
 
     </script>
