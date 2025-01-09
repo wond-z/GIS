@@ -77,34 +77,46 @@
 <body>
     <div id="cesiumContainer"></div>
     <script>
-        var viewer = new Cesium.Viewer("cesiumContainer");
+        var terrain = Cesium.createDefaultTerrainProviderViewModels();
+        var viewer = new Cesium.Viewer("cesiumContainer", {
+            animation:false,
+			vrButton : true,
+			timeline : false,
+			sceneModePicker : false,
+			scene3DOnly : true,
+			infoBox : true,
+			terrainProviderViewModels : terrain,
+			selectedTerrainProviderViewModel : terrain[0]
+        });
 
         async function addModel() {
             // Cesium3DTileset 对象通常用于加载和显示3D瓦片集，这些瓦片集通常包含复杂的三维模型数据，如地形、建筑物和其他地理空间实体
             // Entity 对象用于在Cesium视图中表示和操作简单的图形对象，如点、线、多边形、模型和标签等
-            const tilesetModel = await Cesium.Cesium3DTileset.fromUrl('./SampleData/models/3dtiles/tileset.json', {
+            const tilesetModel = await Cesium.Cesium3DTileset.fromUrl('http://172.30.20.234/Data/tileset.json', {
                 // show: false,
-                enableCollision: true,
-                skipLevelOfDetail: true,
-                // 通用级别跳跃设置
-                baseScreenSpaceError: 1024,
-                skipScreenSpaceErrorFactor: 16,
-                skipLevels: 1,
-                immediatelyLoadDesiredLevelOfDetail: false,
-                loadSiblings: false,
-                cullWithChildrenBounds: true,
-                // 通用动态屏幕空间错误设置
-                dynamicScreenSpaceError: true,
-                dynamicScreenSpaceErrorDensity: 2.0e-4,
-                dynamicScreenSpaceErrorFactor: 24.0,
-                dynamicScreenSpaceErrorHeightFalloff: 0.25
+                // enableCollision: true,
+                // skipLevelOfDetail: true,
+                // // 通用级别跳跃设置
+                // baseScreenSpaceError: 1024,
+                // skipScreenSpaceErrorFactor: 16,
+                // skipLevels: 1,
+                // immediatelyLoadDesiredLevelOfDetail: false,
+                // loadSiblings: false,
+                // cullWithChildrenBounds: true,
+                // // 通用动态屏幕空间错误设置
+                // dynamicScreenSpaceError: true,
+                // dynamicScreenSpaceErrorDensity: 2.0e-4,
+                // dynamicScreenSpaceErrorFactor: 24.0,
+                // dynamicScreenSpaceErrorHeightFalloff: 0.25
+                maximumScreenSpaceError :  16,
+                maximumNumberOfLoadedTiles : 1024
             });
             viewer.scene.primitives.add(tilesetModel);
-            viewer.zoomTo(tilesetModel);
+            viewer.scene.globe.maximumScreenSpaceError = 4/3;
             console.log(tilesetModel)
             var globe = viewer.scene.globe;
             // 开启地下可视化
-            viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
+            // viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
             // globe.translucency.frontFaceAlphaByDistance = new Cesium.NearFarScalar(
             //     1000.0,
             //     0.0,
@@ -139,13 +151,16 @@
 
 
             // 调整模型高度
-            changeHeight(tilesetModel, -420);
+            const centerPosition = {longitude: 108.941865, latitude: 34.28285};
+            // const heightOffset = -420;
+            // changeHeight(tilesetModel, heightOffset, centerPosition);
+            viewer.zoomTo(tilesetModel);
         }
         addModel();
 
         // tileset.readyPromise.then(function (tileset) {
         //高度偏差，正数为向上偏，负数为向下偏，根据真实的模型位置不断进行调整
-        function changeHeight(tileset, heightOffset) {
+        function changeHeight(tileset, heightOffset, centerPosition) {
             height = Number(heightOffset);
             if (isNaN(heightOffset)) {
                 return;
@@ -156,11 +171,29 @@
             var cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
             //计算中心点位置坐标
             var surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0);
-            //偏移后的三维坐标
-            var offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, heightOffset);
-            var translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
-            //tileset.modelMatrix转换
-            tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+            // //偏移后的三维坐标
+            // // var offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, heightOffset);
+            // // 定义摄影移动后的位置
+            // centerPosition.longitude = centerPosition.longitude ? centerPosition.longitude : cartographic.longitude;
+            // centerPosition.latitude = centerPosition.latitude ? centerPosition.latitude : cartographic.latitude;
+            // var newPosition = Cesium.Cartesian3.fromDegrees(centerPosition.longitude, centerPosition.latitude, heightOffset);
+
+            // var translation = Cesium.Cartesian3.subtract(newPosition, surface, new Cesium.Cartesian3());
+            // // tileset.modelMatrix转换
+            // const positionMatrix = Cesium.Matrix4.fromTranslation(translation);
+
+            // 旋转
+            const moveto_vec = Cesium.Cartesian3.multiplyByScalar(surface, -1, new Cesium.Cartesian3());
+            const movetoMatrix = Cesium.Matrix4.fromTranslation(moveto_vec);
+            const backtoMatrix = Cesium.Matrix4.fromTranslation(surface);
+
+            const rotateX = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(90));
+            const rotateMatrix = Cesium.Matrix4.fromRotationTranslation(rotateX);
+
+            const temp = Cesium.Matrix4.multiply(rotateMatrix, movetoMatrix, new Cesium.Matrix4());
+            const final = Cesium.Matrix4.multiply(backtoMatrix, temp, new Cesium.Matrix4());
+            // tileset.modelMatrix转换
+            tileset.modelMatrix = final;
         }
         // });
 
