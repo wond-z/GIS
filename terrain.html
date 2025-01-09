@@ -35,10 +35,18 @@
             //     // })
             // });
             viewer.scene.terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl('/SampleData/tiles/terrain_chengdu')
-
-            // 定义目标坐标
+            console.log(viewer.scene.terrainProvider.tilingScheme.rectangle);
+            const rectangle = viewer.scene.terrainProvider.tilingScheme.rectangle;
+            // 获取地形矩形的中心坐标
+            const rectangleCenter = Cesium.Rectangle.center(rectangle);
+            rectangleCenter.height = 5000;
+            console.log(rectangleCenter)
+            // 笛卡尔坐标转经纬度
+            // console.log('Center Latitude:', Cesium.Math.toDegrees(center.latitude));
+            // console.log('Center Longitude:', Cesium.Math.toDegrees(center.longitude));
+            // // 定义目标坐标
             var targetPosition = Cesium.Cartesian3.fromDegrees(103.726806, 30.610279, 5000);
-
+            console.log(targetPosition)
             // 缩放到指定坐标
             viewer.camera.flyTo({
                 destination : targetPosition
